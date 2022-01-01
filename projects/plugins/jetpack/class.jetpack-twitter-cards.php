@@ -105,14 +105,26 @@ class Jetpack_Twitter_Cards {
 				)
 			);
 			if ( ! empty( $post_image ) && is_array( $post_image ) ) {
+				 /**
+                    * Filters the switch to ignore image size requirements. Can be used
+					* to add custom logic to image dimensions, like only enforcing one of the dimensions,
+                    * or disabling it entirely.
+                    *
+                    * @since 10.6.0
+                    *
+                    * @param bool $ignore Should the image dimensions be ignored?
+                    * @param object $post_image image as returned by Jetpack_PostImages::get_image()
+                    */
+					$ignore_dimensions = apply_filters( 'jetpack_twitter_card_ignore_image_dimensions', false, $post_image );
+
 				// 4096 is the maximum size for an image per https://developer.twitter.com/en/docs/tweets/optimize-with-cards/overview/summary .
 				if (
-					isset( $post_image['src_width'], $post_image['src_height'] )
+					(isset( $post_image['src_width'], $post_image['src_height'] )
 					&& (int) $post_image['src_width'] <= 4096
-					&& (int) $post_image['src_height'] <= 4096
+					&& (int) $post_image['src_height'] <= 4096) || $ignore_dimensions
 				) {
 					// 300x157 is the minimum size for a summary_large_image per https://developer.twitter.com/en/docs/tweets/optimize-with-cards/overview/summary-card-with-large-image .
-					if ( (int) $post_image['src_width'] >= 300 && (int) $post_image['src_height'] >= 157 ) {
+					if ( ((int) $post_image['src_width'] >= 300 && (int) $post_image['src_height'] >= 157) || $ignore_dimensions ) {
 						$card_type                = 'summary_large_image';
 						$og_tags['twitter:image'] = esc_url( add_query_arg( 'w', 640, $post_image['src'] ) );
 					} else {
